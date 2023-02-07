@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+
+  typeform_api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: guhur/typeform-proxy:latest
+    restart: unless-stopped
+      # TODO remove reload
+    command: uvicorn proxy.main:app --host 0.0.0.0 --port 8877 --proxy-headers --env-file ${ENV_FILE:-.env.local} --reload
+    healthcheck:
+      start_period: 30s
+      test: ['CMD-SHELL', 'curl localhost:8877/liveness -s -f -o /dev/null || exit 1']
+      interval: 30s
+      retries: 5
+    volumes:
+      - .:/code
+    networks:
+      - traefik_network
+    environment:
+      POSTGRES_USER: ${DB_USER:-typeform}
+      POSTGRES_PASSWORD: $DB_PASS
+      POSTGRES_DB: ${DB_NAME:-typeform}
+      POSTGRES_HOST: typeform_db
+      TZ: ${TIMEZONE:-Europe/Paris}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-["*"]}
+      SECRET: $SECRET
+    ports:
+      - 8877:8877
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.typeform.entrypoints=web,websecure"
+      - "traefik.http.routers.typeform.rule=Host(`${API_PREFIX:-api}.${DOMAIN}`)"
+      - "traefik.http.services.typeform.loadbalancer.server.port=8877"
+      - "traefik.http.routers.typeform.tls=true"
+      - "traefik.http.routers.typeform.tls.certresolver=leresolver"
+
+
+networks:
+  traefik_network:
+    external: true 
