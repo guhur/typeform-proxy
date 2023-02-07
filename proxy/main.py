@@ -24,7 +24,4 @@ def read_root():
 
 @app.get("/forms/{form_id}/responses")
 def get_responses(form_id: str, included_response_ids: str | None = None):
-    import pdb
-
-    pdb.set_trace()
     return typeform.responses.list(form_id, includedResponseIds=included_response_ids)  # type: ignore
