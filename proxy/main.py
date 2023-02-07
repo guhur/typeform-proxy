@@ -22,7 +22,7 @@ def read_root():
     return "OK"
 
 
-@app.get("/forms/{form_id}")
+@app.get("/forms/{form_id}/responses")
 def get_responses(form_id: str, included_response_ids: str | None = None):
     import pdb
 
